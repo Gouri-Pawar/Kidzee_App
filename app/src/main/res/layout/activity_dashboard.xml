@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".DashboardActivity">
+
+    <VideoView
+        android:id="@+id/main_video"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="center" />
+
+    <LinearLayout
+        android:layout_width="@dimen/main_menu_width"
+        android:layout_height="@dimen/main_menu_height"
+        android:layout_gravity="center"
+        android:background="@drawable/transparent_background"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <pl.droidsonroids.gif.GifImageView
+            android:layout_width="@dimen/logo_dimensions"
+            android:layout_height="@dimen/logo_dimensions"
+            android:src="@drawable/doodle_logo"
+            android:transitionName="logo_image" />
+
+
+        <Button
+            android:id="@+id/main_english_letters_btn"
+            style="@style/textStyle"
+            android:layout_width="@dimen/main_menu_button_width"
+            android:layout_height="wrap_content"
+            android:background="@drawable/button_style"
+            android:text="@string/english_letters" />
+
+        <Button
+            android:id="@+id/main_english_numbers_btn"
+            style="@style/textStyle"
+            android:layout_width="@dimen/main_menu_button_width"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/large_spacing"
+            android:background="@drawable/button_style"
+            android:text="@string/english_numbers" />
+
+        <Button
+            android:id="@+id/main_drawing_btn"
+            style="@style/textStyle"
+            android:layout_width="@dimen/main_menu_button_width"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/large_spacing"
+            android:background="@drawable/button_style"
+            android:text="@string/drawing" />
+
+        <Button
+            android:id="@+id/main_songs_btn"
+            style="@style/textStyle"
+            android:layout_width="@dimen/main_menu_button_width"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/large_spacing"
+            android:background="@drawable/text_border"
+            android:text="@string/music_videos" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/xlarge_spacing"
+            android:orientation="horizontal">
+
+            <pl.droidsonroids.gif.GifImageView
+                android:layout_width="@dimen/img_dimensions"
+                android:layout_height="@dimen/img_dimensions"
+                android:src="@drawable/animals_anim" />
+
+            <pl.droidsonroids.gif.GifImageView
+                android:layout_width="@dimen/img_dimensions"
+                android:layout_height="@dimen/img_dimensions"
+                android:src="@drawable/bus_anim" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>
