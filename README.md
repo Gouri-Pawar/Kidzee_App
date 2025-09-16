@@ -1,12 +1,22 @@
-# 🧸 Kidzee App  
+<h1 align="center">🧸 Kidzee App</h1>
 
-[![Java](https://img.shields.io/badge/Language-Java-red)](https://www.java.com/)  
-[![Android](https://img.shields.io/badge/Platform-Android-green)](https://developer.android.com/)  
-[![Made With ❤️](https://img.shields.io/badge/Made%20With-%E2%9D%A4-red)](#)  
-[![License](https://img.shields.io/badge/License-MIT-blue)](#license)  
+<p align="center">
+  <img src="https://img.shields.io/badge/Language-Java-red?logo=openjdk&logoColor=white" alt="Java Badge" />
+  &nbsp;&nbsp;&nbsp;
+  <img src="https://img.shields.io/badge/Platform-Android-green?logo=android&logoColor=white" alt="Android Badge" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Made%20With-%E2%9D%A4-red" alt="Made with Love" />
+  &nbsp;&nbsp;&nbsp;
+  <img src="https://img.shields.io/badge/License-MIT-blue" alt="License" />
+</p>
+
+---
 
 **Kidzee** is a fun and interactive **educational Android app for children (ages 5–6)**, built with **Java and XML**.  
 It brings **quality learning** through **visual animations, videos, and quizzes**, making education both **accessible and fun**.  
+ 
 
 ---
 
