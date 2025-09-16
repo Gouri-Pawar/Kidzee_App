@@ -8,14 +8,13 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Made%20With-%E2%9D%A4-red" alt="Made with Love" />
-  &nbsp;&nbsp;&nbsp;
-  <img src="https://img.shields.io/badge/License-MIT-blue" alt="License" />
 </p>
 
 ---
 
 **Kidzee** is a fun and interactive **educational Android app for children (ages 5–6)**, built with **Java and XML**.  
 It brings **quality learning** through **visual animations, videos, and quizzes**, making education both **accessible and fun**.  
+ 
  
 
 ---
@@ -88,11 +87,5 @@ It brings **quality learning** through **visual animations, videos, and quizzes*
 With offline support, engaging visuals, and easy navigation, it ensures children can **learn effectively while having fun**.  
 
 ⭐ **Fun + Learning + Accessibility = Kidzee** ⭐  
-
----
-
-## 📄 License  
-
-This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.  
 
 ---
