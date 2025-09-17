@@ -24,7 +24,7 @@ It brings **quality learning** through **visual animations, videos, and quizzes*
 <details>
 <summary>✨ Tap to view all features</summary>
 
-- 🎓 **Login Screen** → Simple, child-friendly access  
+- 🎓 **Login Screen** → Simple, easy to login 
 - 🔢 **Learn Numbers & Alphabets** → With videos & animations  
 - 📝 **Quiz Section** → Fun, interactive quizzes  
 - 📱 **User-Friendly Interface** → Easy navigation for kids  
