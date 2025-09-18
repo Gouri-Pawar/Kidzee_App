@@ -14,24 +14,27 @@ import java.util.ArrayList;
 
 public class EnglishNumbersActivity extends AppCompatActivity {
 
-    private MediaPlayer mediaPlayer, music;
+    private MediaPlayer music;          // background music
+    private MediaPlayer soundPlayer;    // item sound
     private ImageView background;
     private ListView listView;
     private boolean backPressed;
     protected static boolean VISIBLE_BACKGROUND = false, playMusic = false;
-    private MediaPlayer.OnCompletionListener completionListener = new MediaPlayer.OnCompletionListener() {
+
+    private final MediaPlayer.OnCompletionListener completionListener = new MediaPlayer.OnCompletionListener() {
         @Override
-        public void onCompletion(MediaPlayer mediaPlayer) {
-            releaseMedia();
-            if(background.getDrawable()!=null){
+        public void onCompletion(MediaPlayer mp) {
+            if (soundPlayer != null) {
+                soundPlayer.release();
+                soundPlayer = null;
+            }
+
+            if (background.getDrawable() != null) {
                 background.animate().alpha(0).setDuration(1000);
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        music.start();
-                        playMusic = true;
-                        background.setImageDrawable(null);
-                    }
+                new Handler().postDelayed(() -> {
+                    music.start();
+                    playMusic = true;
+                    background.setImageDrawable(null);
                 }, 2000);
             }
         }
@@ -42,23 +45,28 @@ public class EnglishNumbersActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_display_data);
 
-        music = MediaPlayer.create(this, R.raw.looped_music);
-        music.setLooping(true);
-        backPressed = false;
-
         background = findViewById(R.id.display_data_background);
         listView = findViewById(R.id.list_view);
 
-        if(!VISIBLE_BACKGROUND) {
+        backPressed = false;
+
+        // Background music
+        music = MediaPlayer.create(this, R.raw.looped_music);
+        music.setLooping(true);
+        music.start();
+
+        // Initial intro sound
+        if (!VISIBLE_BACKGROUND) {
             background.animate().alpha(1).setDuration(1000);
             VISIBLE_BACKGROUND = true;
-            mediaPlayer = mediaPlayer.create(this, R.raw.sound_w);
-            mediaPlayer.start();
-            mediaPlayer.setVolume(0, 0);
-            mediaPlayer.setOnCompletionListener(completionListener);
+            soundPlayer = MediaPlayer.create(this, R.raw.sound_w);
+            soundPlayer.setVolume(0, 0); // muted
+            soundPlayer.setOnCompletionListener(completionListener);
+            soundPlayer.start();
         }
 
-        final ArrayList<Data> arrayList = new ArrayList<Data>();
+        // Prepare number data
+        final ArrayList<Data> arrayList = new ArrayList<>();
         arrayList.add(new Data(R.raw.sound_1, R.drawable.number_1, R.drawable.apple_1, "One"));
         arrayList.add(new Data(R.raw.sound_2, R.drawable.number_2, R.drawable.apples_2, "Two"));
         arrayList.add(new Data(R.raw.sound_3, R.drawable.number_3, R.drawable.apples_3, "Three"));
@@ -73,56 +81,55 @@ public class EnglishNumbersActivity extends AppCompatActivity {
         DataAdapter dataAdapter = new DataAdapter(this, arrayList);
         listView.setAdapter(dataAdapter);
 
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                releaseMedia();
-                mediaPlayer = mediaPlayer.create(EnglishNumbersActivity.this, arrayList.get(position).getRawID());
-                mediaPlayer.start();
-                mediaPlayer.setOnCompletionListener(completionListener);
+        // Item click listener
+        listView.setOnItemClickListener((adapterView, view, position, id) -> {
+            if (soundPlayer != null) {
+                soundPlayer.release();
             }
+            soundPlayer = MediaPlayer.create(EnglishNumbersActivity.this, arrayList.get(position).getRawID());
+            soundPlayer.start();
+            soundPlayer.setOnCompletionListener(completionListener);
         });
     }
 
-    private void releaseMedia(){
-        if (mediaPlayer != null) {
-            mediaPlayer.release();
-            mediaPlayer = null;
+    private void releaseMusic() {
+        if (music != null) {
+            music.release();
+            music = null;
         }
     }
 
-    private void releaseMusic(){
-        music.release();
-        music = null;
-    }
-    @Override
-    public void onBackPressed() {
-        finish();
-        releaseMedia();
-        releaseMusic();
-        backPressed = true;
+    private void releaseSoundPlayer() {
+        if (soundPlayer != null) {
+            soundPlayer.release();
+            soundPlayer = null;
+        }
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        if(playMusic)
-            music.start();
+    public void onBackPressed() {
+        backPressed = true;
+        releaseSoundPlayer();
+        releaseMusic();
+        super.onBackPressed();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if(!backPressed)
-            music.pause();
+        if (!backPressed && music != null) music.pause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (playMusic && music != null) music.start();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(!backPressed){
-            releaseMusic();
-            releaseMedia();
-        }
+        releaseSoundPlayer();
+        releaseMusic();
     }
 }

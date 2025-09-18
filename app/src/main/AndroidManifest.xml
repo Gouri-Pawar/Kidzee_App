@@ -14,7 +14,8 @@
         android:theme="@style/Theme.Kidszee">
         <activity android:name=".RegisterActivity"></activity>
         <activity android:name=".LoginActivity" />
-        <activity android:name=".SplashActivity">
+        <activity android:name=".SplashActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

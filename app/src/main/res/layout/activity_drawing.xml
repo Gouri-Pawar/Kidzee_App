@@ -23,7 +23,7 @@
             android:background="#00FFFFFF"
             android:layout_marginEnd="@dimen/endMargin"
             android:layout_marginRight="@dimen/endMargin"
-            android:src="@mipmap/new_icon" />
+            android:src="@drawable/new_icon" />
 
         <ImageButton
             android:id="@+id/erase_btn"
@@ -32,8 +32,8 @@
             android:layout_marginEnd="@dimen/endMargin"
             android:layout_marginRight="@dimen/endMargin"
             android:contentDescription="@string/erase"
-            android:background="@mipmap/eraser"
-            android:src="@mipmap/eraser" />
+            android:background="#00FFFFFF"
+            android:src="@drawable/eraser" />
 
         <ImageButton
             android:id="@+id/undo_btn"
@@ -43,7 +43,7 @@
             android:layout_marginEnd="@dimen/endMargin"
             android:layout_marginRight="@dimen/endMargin"
             android:background="#00FFFFFF"
-            android:src="@mipmap/undo" />
+            android:src="@drawable/undo" />
 
         <ImageButton
             android:id="@+id/redo_btn"
@@ -53,37 +53,39 @@
             android:layout_marginEnd="@dimen/endMargin"
             android:layout_marginRight="@dimen/endMargin"
             android:background="#00FFFFFF"
-            android:src="@mipmap/redo" />
+            android:src="@drawable/redo" />
 
         <ImageButton
+            android:id="@+id/load1"
             android:layout_width="36dp"
             android:layout_height="36dp"
-            app:srcCompat="@mipmap/load"
+            app:srcCompat="@drawable/load"
             android:layout_marginEnd="@dimen/endMargin"
             android:layout_marginRight="@dimen/endMargin"
             android:background="#00FFFFFF"
             android:contentDescription="@string/load"
-            android:id="@+id/load1" />
+             />
 
         <ImageButton
+            android:id="@+id/load2"
             android:layout_width="36dp"
             android:layout_height="36dp"
-            app:srcCompat="@mipmap/load"
+            app:srcCompat="@drawable/load"
             android:layout_marginEnd="@dimen/endMargin"
             android:layout_marginRight="@dimen/endMargin"
             android:background="#00FFFFFF"
             android:contentDescription="@string/load"
-            android:id="@+id/load2" />
+             />
 
         <ImageButton
+            android:id="@+id/load3"
             android:layout_width="36dp"
             android:layout_height="36dp"
-            app:srcCompat="@mipmap/load"
+            app:srcCompat="@drawable/load"
             android:layout_marginEnd="@dimen/endMargin"
             android:layout_marginRight="@dimen/endMargin"
             android:background="#00FFFFFF"
-            android:contentDescription="@string/load"
-            android:id="@+id/load3" />
+            android:contentDescription="@string/load" />
 
     </LinearLayout>
 
@@ -99,20 +101,20 @@
             android:layout_width="@dimen/icon_size"
             android:layout_height="@dimen/icon_size"
             android:layout_margin="2dp"
-            android:background="@mipmap/red"
+            android:background="@drawable/red"
             android:contentDescription="@string/paint"
             android:onClick="paintClicked"
-            android:src="@mipmap/red"
+            android:src="@drawable/red"
             android:tag="#FFFF0000" />
 
         <ImageButton
             android:layout_width="@dimen/icon_size"
             android:layout_height="@dimen/icon_size"
             android:layout_margin="2dp"
-            android:background="@mipmap/yellow"
+            android:background="@drawable/yellow"
             android:contentDescription="@string/paint"
             android:onClick="paintClicked"
-            android:src="@mipmap/yellow"
+            android:src="@drawable/yellow"
             android:tag="#FFFFCC00"
             android:id="@+id/yc" />
 
@@ -120,10 +122,10 @@
             android:layout_width="@dimen/icon_size"
             android:layout_height="@dimen/icon_size"
             android:layout_margin="2dp"
-            android:background="@mipmap/green"
+            android:background="@drawable/green"
             android:contentDescription="@string/paint"
             android:onClick="paintClicked"
-            android:src="@mipmap/green"
+            android:src="@drawable/green"
             android:tag="#32cd32"
             android:id="@+id/gc" />
 
@@ -131,10 +133,10 @@
             android:layout_width="@dimen/icon_size"
             android:layout_height="@dimen/icon_size"
             android:layout_margin="2dp"
-            android:background="@mipmap/blue"
+            android:background="@drawable/blue"
             android:contentDescription="@string/paint"
             android:onClick="paintClicked"
-            android:src="@mipmap/blue"
+            android:src="@drawable/blue"
             android:tag="#00bfff"
             android:id="@+id/bc" />
 
@@ -142,10 +144,10 @@
             android:layout_width="@dimen/icon_size"
             android:layout_height="@dimen/icon_size"
             android:layout_margin="2dp"
-            android:background="@mipmap/pink"
+            android:background="@drawable/pink"
             android:contentDescription="@string/paint"
             android:onClick="paintClicked"
-            android:src="@mipmap/pink"
+            android:src="@drawable/pink"
             android:tag="#FFFF00FF"
             android:id="@+id/pc" />
     </LinearLayout>
@@ -160,4 +162,5 @@
         android:layout_marginTop="3dp"
         android:layout_weight="1"
         android:background="#FFFFFFFF" />
+
 </LinearLayout>

@@ -29,48 +29,32 @@ public class VideosActivity extends AppCompatActivity {
         uri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.english_alphabet_song);
         videoView.setVideoURI(uri);
         videoView.start();
+        videoView.setOnPreparedListener(mp -> mp.setLooping(true));
 
-        videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer media) {
-                releaseMedia();
-                mediaPlayer = media;
-            }
-        });
-
-        englishLetters.setOnClickListener(new View.OnClickListener(){
+        englishLetters.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 englishLetters.setBackgroundResource(R.drawable.transparent_background);
                 englishNumbers.setBackgroundResource(R.drawable.button_style);
 
-                uri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.english_alphabet_song);
-                videoView.setVideoURI(uri);
+                videoView.setVideoURI(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.english_alphabet_song));
                 videoView.start();
             }
         });
-        englishNumbers.setOnClickListener(new View.OnClickListener(){
+
+        englishNumbers.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 englishNumbers.setBackgroundResource(R.drawable.transparent_background);
                 englishLetters.setBackgroundResource(R.drawable.button_style);
 
-                uri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.english_numbers_song);
-                videoView.setVideoURI(uri);
+                videoView.setVideoURI(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.english_numbers_song));
                 videoView.start();
             }
         });
-
     }
 
-    private void releaseMedia(){
-        if (mediaPlayer != null) {
-            mediaPlayer.release();
-            mediaPlayer = null;
-        }
-    }
-
-    @Override
+        @Override
     protected void onPause() {
         super.onPause();
         videoView.pause();
@@ -85,6 +69,5 @@ public class VideosActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        releaseMedia();
     }
 }

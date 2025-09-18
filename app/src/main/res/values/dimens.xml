@@ -31,7 +31,7 @@
     <dimen name="endMargin">10dp</dimen>
     <integer name="color_size">50</integer>
     <dimen name="logo_dimensions">100dp</dimen>
-    <dimen name="main_menu_width">280dp</dimen>
+    <dimen name="main_menu_width">300dp</dimen>
     <dimen name="main_menu_height">560dp</dimen>
     <dimen name="small_text_size">12sp</dimen>
     <dimen name="default_text_size">18sp</dimen>

@@ -3,6 +3,7 @@ plugins {
 }
 
 android {
+    namespace "com.mgm.kidszee"
     compileSdkVersion 31
 
     defaultConfig {

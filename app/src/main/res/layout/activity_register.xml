@@ -81,7 +81,7 @@
             android:id="@+id/bLogin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="null"
+            android:background="@android:color/transparent"
             android:gravity="center"
             android:text="Already a User ? Login"
             android:textColor="@color/black" />

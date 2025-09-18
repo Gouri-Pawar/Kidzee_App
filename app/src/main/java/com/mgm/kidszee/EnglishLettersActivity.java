@@ -14,24 +14,29 @@ import java.util.ArrayList;
 
 public class EnglishLettersActivity extends AppCompatActivity {
 
-    private MediaPlayer mediaPlayer, music;
+    private MediaPlayer music;          // background music
+    private MediaPlayer soundPlayer;    // letter sounds
     private ImageView background;
     private ListView listView;
     private boolean backPressed;
     protected static boolean VISIBLE_BACKGROUND = false, playMusic = false;
-    private MediaPlayer.OnCompletionListener completionListener = new MediaPlayer.OnCompletionListener() {
+
+    private final MediaPlayer.OnCompletionListener completionListener = new MediaPlayer.OnCompletionListener() {
         @Override
-        public void onCompletion(MediaPlayer mediaPlayer) {
-            releaseMedia();
-            if(background.getDrawable()!=null){
+        public void onCompletion(MediaPlayer mp) {
+            if (soundPlayer != null) {
+                soundPlayer.release();
+                soundPlayer = null;
+            }
+
+            if (background.getDrawable() != null) {
                 background.animate().alpha(0).setDuration(1000);
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
+                new Handler().postDelayed(() -> {
+                    if (music != null) {
                         music.start();
                         playMusic = true;
-                        background.setImageDrawable(null);
                     }
+                    background.setImageDrawable(null);
                 }, 2000);
             }
         }
@@ -42,22 +47,26 @@ public class EnglishLettersActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_display_data);
 
-        music = MediaPlayer.create(this, R.raw.looped_music);
-        music.setLooping(true);
-        backPressed = false;
-
         background = findViewById(R.id.display_data_background);
         listView = findViewById(R.id.list_view);
+        backPressed = false;
 
-        if(!VISIBLE_BACKGROUND) {
+        // Background music
+        music = MediaPlayer.create(this, R.raw.looped_music);
+        music.setLooping(true);
+        music.start();
+
+        // Initial intro sound
+        if (!VISIBLE_BACKGROUND) {
             background.animate().alpha(1).setDuration(1000);
             VISIBLE_BACKGROUND = true;
-            mediaPlayer = mediaPlayer.create(this, R.raw.sound_the_abc_s);
-            mediaPlayer.start();
-            mediaPlayer.setOnCompletionListener(completionListener);
+            soundPlayer = MediaPlayer.create(this, R.raw.sound_the_abc_s);
+            soundPlayer.start();
+            soundPlayer.setOnCompletionListener(completionListener);
         }
 
-        final ArrayList<Data> arrayList = new ArrayList<Data>();
+        // Prepare letters data
+        final ArrayList<Data> arrayList = new ArrayList<>();
         arrayList.add(new Data(R.raw.sound_a, R.drawable.letter_a, R.drawable.animal_ant, "Ant"));
         arrayList.add(new Data(R.raw.sound_b, R.drawable.letter_b, R.drawable.animal_bird, "Bird"));
         arrayList.add(new Data(R.raw.sound_c, R.drawable.letter_c, R.drawable.animal_cat, "Cat"));
@@ -88,55 +97,55 @@ public class EnglishLettersActivity extends AppCompatActivity {
         DataAdapter dataAdapter = new DataAdapter(this, arrayList);
         listView.setAdapter(dataAdapter);
 
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                releaseMedia();
-                mediaPlayer = mediaPlayer.create(EnglishLettersActivity.this, arrayList.get(position).getRawID());
-                mediaPlayer.start();
-                mediaPlayer.setOnCompletionListener(completionListener);
+        // Item click listener
+        listView.setOnItemClickListener((adapterView, view, position, id) -> {
+            if (soundPlayer != null) {
+                soundPlayer.release();
             }
+            soundPlayer = MediaPlayer.create(EnglishLettersActivity.this, arrayList.get(position).getRawID());
+            soundPlayer.start();
+            soundPlayer.setOnCompletionListener(completionListener);
         });
     }
 
-    private void releaseMedia(){
-        if (mediaPlayer != null) {
-            mediaPlayer.release();
-            mediaPlayer = null;
+    private void releaseMusic() {
+        if (music != null) {
+            music.release();
+            music = null;
         }
     }
-    private void releaseMusic(){
-        music.release();
-        music = null;
-    }
-    @Override
-    public void onBackPressed() {
-        finish();
-        releaseMedia();
-        releaseMusic();
-        backPressed = true;
+
+    private void releaseSoundPlayer() {
+        if (soundPlayer != null) {
+            soundPlayer.release();
+            soundPlayer = null;
+        }
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        if(playMusic)
-            music.start();
+    public void onBackPressed() {
+        backPressed = true;
+        releaseSoundPlayer();
+        releaseMusic();
+        super.onBackPressed();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if(!backPressed)
-            music.pause();
+        if (!backPressed && music != null) music.pause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (playMusic && music != null) music.start();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(!backPressed){
-            releaseMusic();
-            releaseMedia();
-        }
+        releaseSoundPlayer();
+        releaseMusic();
     }
 }
