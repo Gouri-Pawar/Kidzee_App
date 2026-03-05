@@ -31,7 +31,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         initSpinner();
 
-        music = music.create(this, R.raw.looped_music);
+        music = MediaPlayer.create(this, R.raw.looped_music);
         music.setLooping(true);
         music.start();
 

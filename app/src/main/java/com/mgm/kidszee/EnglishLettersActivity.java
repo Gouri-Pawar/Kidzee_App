@@ -32,7 +32,7 @@ public class EnglishLettersActivity extends AppCompatActivity {
             if (background.getDrawable() != null) {
                 background.animate().alpha(0).setDuration(1000);
                 new Handler().postDelayed(() -> {
-                    if (music != null) {
+                    if (music != null && !music.isPlaying()) {
                         music.start();
                         playMusic = true;
                     }
@@ -133,7 +133,9 @@ public class EnglishLettersActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        if (!backPressed && music != null) music.pause();
+        if (music != null && music.isPlaying()) {
+            music.pause();
+        }
     }
 
     @Override

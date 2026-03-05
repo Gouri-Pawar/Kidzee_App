@@ -43,6 +43,7 @@ public class LoginActivity extends AppCompatActivity {
 
     public void register() {
         startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
+        finish();
     }
 
     public void login() {
@@ -55,8 +56,8 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(this, "Mobile No must be 10 digits", Toast.LENGTH_LONG).show();
         } else {
             sharedpreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
-            if (mbNo.equals(sharedpreferences.getString("mbNo", "").toString()) &&
-                    password.equals(sharedpreferences.getString("password", "").toString())) {
+            if (mbNo.equals(sharedpreferences.getString("mbNo", "")) &&
+                    password.equals(sharedpreferences.getString("password", ""))) {
                 startActivity(new Intent(LoginActivity.this, DashboardActivity.class));
             } else {
                 Toast.makeText(this, "Invalid Mobile / Password", Toast.LENGTH_LONG).show();

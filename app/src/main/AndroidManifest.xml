@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.mgm.kidszee">
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
@@ -33,10 +32,14 @@
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".EnglishLettersActivity"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NoActionBar"
+            />
+
         <activity
             android:name=".EnglishNumbersActivity"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NoActionBar"
+            />
+
         <activity
             android:name=".VideosActivity"
             android:theme="@style/AppTheme.NoActionBar" />

@@ -1,20 +1,17 @@
 package com.mgm.kidszee;
 
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.VideoView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import android.widget.MediaController;
 
 public class VideosActivity extends AppCompatActivity {
 
     private Button englishLetters, englishNumbers;
     private VideoView videoView;
-    private MediaPlayer mediaPlayer;
-    private Uri uri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,51 +20,61 @@ public class VideosActivity extends AppCompatActivity {
 
         englishLetters = findViewById(R.id.videos_english_letters_btn);
         englishNumbers = findViewById(R.id.videos_english_numbers_btn);
-
         videoView = findViewById(R.id.videos_video_view);
 
-        uri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.english_alphabet_song);
-        videoView.setVideoURI(uri);
-        videoView.start();
-        videoView.setOnPreparedListener(mp -> mp.setLooping(true));
+        MediaController mediaController = new MediaController(this);
+        mediaController.setAnchorView(videoView);
+        videoView.setMediaController(mediaController);
 
-        englishLetters.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                englishLetters.setBackgroundResource(R.drawable.transparent_background);
-                englishNumbers.setBackgroundResource(R.drawable.button_style);
+        // Play default video
+        playVideo(R.raw.english_alphabet_song);
 
-                videoView.setVideoURI(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.english_alphabet_song));
-                videoView.start();
-            }
+        // English Letters Button
+        englishLetters.setOnClickListener(view -> {
+            englishLetters.setBackgroundResource(R.drawable.transparent_background);
+            englishNumbers.setBackgroundResource(R.drawable.button_style);
+            playVideo(R.raw.english_alphabet_song);
         });
 
-        englishNumbers.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                englishNumbers.setBackgroundResource(R.drawable.transparent_background);
-                englishLetters.setBackgroundResource(R.drawable.button_style);
-
-                videoView.setVideoURI(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.english_numbers_song));
-                videoView.start();
-            }
+        // English Numbers Button
+        englishNumbers.setOnClickListener(view -> {
+            englishNumbers.setBackgroundResource(R.drawable.transparent_background);
+            englishLetters.setBackgroundResource(R.drawable.button_style);
+            playVideo(R.raw.english_numbers_song);
         });
     }
 
-        @Override
+    /**
+     * Method to play video from raw folder
+     */
+    private void playVideo(int videoRes) {
+        Uri uri = Uri.parse("android.resource://" + getPackageName() + "/" + videoRes);
+        videoView.setVideoURI(uri);
+        videoView.setOnPreparedListener(mp -> mp.setLooping(true));
+        videoView.start();
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
-        videoView.pause();
+        if (videoView != null && videoView.isPlaying()) {
+            videoView.pause();
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        videoView.start();
+        if (videoView != null) {
+            videoView.start();
+        }
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onDestroy() {
+        super.onDestroy();
+        if (videoView != null) {
+            videoView.stopPlayback();
+        }
     }
 }

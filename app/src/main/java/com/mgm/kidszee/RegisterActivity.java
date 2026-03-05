@@ -49,8 +49,6 @@ public class RegisterActivity extends AppCompatActivity {
         name = etName.getText().toString();
         mbNo = etMbNo.getText().toString();
         password = etPassword.getText().toString();
-        mbNo = etMbNo.getText().toString();
-        password = etPassword.getText().toString();
 
         if (name.equals("") || mbNo.equals("") || password.equals("")) {
             Toast.makeText(this, "Fields Compulsory", Toast.LENGTH_LONG).show();
@@ -64,7 +62,7 @@ public class RegisterActivity extends AppCompatActivity {
             editor.putString("name", name);
             editor.putString("mbNo", mbNo);
             editor.putString("password", password);
-            editor.commit();
+            editor.apply();
             Toast.makeText(RegisterActivity.this, "Register Success", Toast.LENGTH_LONG).show();
             startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
         }

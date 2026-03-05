@@ -255,15 +255,19 @@ public class PaintView extends View {
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                bg_music.start();
-                bg_music.setLooping(true);
+                if (bg_music != null) {
+                    bg_music.start();
+                    bg_music.setLooping(true);
+                }
                 touch_start(x, y);
                 break;
             case MotionEvent.ACTION_MOVE:
                 touch_move(x, y);
                 break;
             case MotionEvent.ACTION_UP:
-                bg_music.pause();
+                if (bg_music != null && bg_music.isPlaying()) {
+                    bg_music.pause();
+                }
                 touch_up();
                 break;
             default:

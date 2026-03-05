@@ -10,18 +10,20 @@
 
     <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="200dp"
         android:layout_gravity="left">
 
         <ImageView
             android:layout_width="@dimen/logo_dimensions"
             android:layout_height="@dimen/logo_dimensions"
+            android:layout_marginStart="40dp"
             android:background="@drawable/transparent_background"
             android:src="@drawable/doodle_logo" />
 
         <pl.droidsonroids.gif.GifImageView
-            android:layout_width="@dimen/large_gif_dimensions"
-            android:layout_height="@dimen/large_gif_dimensions"
+            android:layout_width="150dp"
+            android:layout_height="100dp"
+            android:layout_marginTop="100dp"
             android:src="@drawable/learn_anim" />
     </LinearLayout>
 
@@ -46,6 +48,8 @@
             android:layout_height="wrap_content"
             android:background="@drawable/button_style"
             android:maxWidth="0dp"
+            android:layout_marginLeft="40dp"
+            android:layout_marginBottom="10dp"
             android:text="@string/english_numbers"
             android:textSize="@dimen/small_text_size" />
 </LinearLayout>
@@ -53,5 +57,6 @@
     <VideoView
         android:id="@+id/videos_video_view"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent" />
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 </LinearLayout>

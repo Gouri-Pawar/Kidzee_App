@@ -1,6 +1,7 @@
 package com.mgm.kidszee;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -149,6 +150,7 @@ public class DrawingActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -195,8 +197,10 @@ public class DrawingActivity extends AppCompatActivity {
         if (!paused) {
             Runnable runnable = () -> {
                 long start = System.currentTimeMillis();
-                while (System.currentTimeMillis() - start < 10000) {
-                    // wait
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
                 handler.sendEmptyMessage(0);
             };
@@ -241,7 +245,7 @@ public class DrawingActivity extends AppCompatActivity {
     private void loadClicked(View view, final int i) {
         paintView.drawingChanging = true;
         view.startAnimation(zoomIO);
-        if (prevFilePath[i] == null) {
+        if (prevFilePath == null || prevFilePath[i] == null) {
             startVoice(R.raw.noprev);
             Toast.makeText(this, "No previous drawings", Toast.LENGTH_SHORT).show();
             return;
@@ -305,29 +309,40 @@ public class DrawingActivity extends AppCompatActivity {
     }
 
     private void saveDrawing() {
-        int permissionCheck = ContextCompat.checkSelfPermission(this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    REQUEST_EXTERNAL_STORAGE);
-        } else {
-            paintView.setDrawingCacheEnabled(true);
-            paintView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
-            Bitmap bitmap = paintView.getDrawingCache();
-            File pictureFile = new File(savePath + File.separator + saveName);
-            try {
-                FileOutputStream fos = new FileOutputStream(pictureFile);
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
-                fos.close();
-                Toast.makeText(getApplicationContext(),
-                        "Drawing Saved! " + pictureFile.getAbsolutePath(), Toast.LENGTH_SHORT).show();
-            } catch (Exception e) {
-                Toast.makeText(getApplicationContext(),
-                        "Oops! Image could not be saved. " + pictureFile.getAbsolutePath(), Toast.LENGTH_SHORT).show();
-            }
+
+        if (savePath == null) {
+            Toast.makeText(this, "Storage not available", Toast.LENGTH_SHORT).show();
+            return;
         }
-        paintView.setDrawingCacheEnabled(false);
+
+        try {
+
+            Bitmap bitmap = Bitmap.createBitmap(
+                    paintView.getWidth(),
+                    paintView.getHeight(),
+                    Bitmap.Config.ARGB_8888
+            );
+
+            android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
+            paintView.draw(canvas);
+
+            File pictureFile = new File(savePath + File.separator + saveName);
+
+            FileOutputStream fos = new FileOutputStream(pictureFile);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            fos.flush();
+            fos.close();
+            saveName = setSaveName();
+            createThumbNail();
+
+            Toast.makeText(getApplicationContext(),
+                    "Drawing Saved!", Toast.LENGTH_SHORT).show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(),
+                    "Error saving image!", Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void createThumbNail() {
@@ -388,8 +403,10 @@ public class DrawingActivity extends AppCompatActivity {
             if (!isExternalStorageWritable()) {
                 return null;
             }
-            File mediaStorageDir = new File(context.getExternalFilesDir(
-                    Environment.DIRECTORY_PICTURES).getAbsolutePath(), albumName);
+            File mediaStorageDir = new File(
+                    getExternalFilesDir(Environment.DIRECTORY_PICTURES),
+                    albumName
+            );
             if (!mediaStorageDir.exists()) {
                 if (!mediaStorageDir.mkdirs()) {
                     return null;
@@ -427,9 +444,15 @@ public class DrawingActivity extends AppCompatActivity {
     }
 
     void setMusic(int musicId) {
-        if (paintView.bg_music != null) {
+        if (paintView != null && paintView.bg_music != null) {
             paintView.bg_music.release();
         }
+
         paintView.bg_music = MediaPlayer.create(context, musicId);
+
+        if (paintView.bg_music != null) {
+            paintView.bg_music.setLooping(true);
+            paintView.bg_music.start();
+        }
     }
 }

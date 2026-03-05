@@ -31,9 +31,11 @@ public class EnglishNumbersActivity extends AppCompatActivity {
 
             if (background.getDrawable() != null) {
                 background.animate().alpha(0).setDuration(1000);
-                new Handler().postDelayed(() -> {
-                    music.start();
-                    playMusic = true;
+                new Handler(getMainLooper()).postDelayed(() -> {
+                    if (music != null) {
+                        music.start();
+                        playMusic = true;
+                    }
                     background.setImageDrawable(null);
                 }, 2000);
             }
@@ -85,6 +87,7 @@ public class EnglishNumbersActivity extends AppCompatActivity {
         listView.setOnItemClickListener((adapterView, view, position, id) -> {
             if (soundPlayer != null) {
                 soundPlayer.release();
+                soundPlayer = null;
             }
             soundPlayer = MediaPlayer.create(EnglishNumbersActivity.this, arrayList.get(position).getRawID());
             soundPlayer.start();

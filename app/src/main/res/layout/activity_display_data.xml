@@ -3,8 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/inside_class"
-    tools:context=".EnglishLettersActivity">
+    android:background="@drawable/inside_class">
 
     <ListView
         android:id="@+id/list_view"

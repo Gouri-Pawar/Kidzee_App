@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Kidszee</string>
+    <string name="app_name">KidsZee</string>
     <string name="slide_1_title" translatable="false">Hello Folk!</string>
     <string name="slide_1_desc" translatable="false">This app is for Children!
         </string>
