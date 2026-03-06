@@ -13,7 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public class DashboardActivity extends AppCompatActivity {
 
     private VideoView video;
-    private MediaPlayer mediaPlayer, music;
+    public static MediaPlayer mediaPlayer, music;
 
     private Button englishLetters, englishNumbers, drawing, songs;
 
@@ -31,47 +31,59 @@ public class DashboardActivity extends AppCompatActivity {
 
         initSpinner();
 
+        // Initialize and start looping music
         music = MediaPlayer.create(this, R.raw.looped_music);
         music.setLooping(true);
         music.start();
 
+        // Initialize video
         Uri uri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.background_video);
         video.setVideoURI(uri);
         video.start();
         songs.animate().scaleX(0.8f).setDuration(3000);
 
-        englishLetters.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(DashboardActivity.this, EnglishLettersActivity.class));
+        // Set button listeners
+        englishLetters.setOnClickListener(v -> {
+            if (music != null && music.isPlaying()) {
+                music.pause();
             }
+            if (video != null && video.isPlaying()) {
+                video.pause();
+            }
+            startActivity(new Intent(DashboardActivity.this, EnglishLettersActivity.class));
         });
-        englishNumbers.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(DashboardActivity.this, EnglishNumbersActivity.class));
+        englishNumbers.setOnClickListener(v -> {
+            if (music != null && music.isPlaying()) {
+                music.pause();
             }
+            if (video != null && video.isPlaying()) {
+                video.pause();
+            }
+            startActivity(new Intent(DashboardActivity.this, EnglishNumbersActivity.class));
         });
-        drawing.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(DashboardActivity.this, DrawingActivity.class));
+        drawing.setOnClickListener(v -> {
+            if (music != null && music.isPlaying()) {
+                music.pause();
             }
+            if (video != null && video.isPlaying()) {
+                video.pause();
+            }
+            startActivity(new Intent(DashboardActivity.this, DrawingActivity.class));
         });
-        songs.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(DashboardActivity.this, VideosActivity.class));
+        songs.setOnClickListener(v -> {
+            if (music != null && music.isPlaying()) {
+                music.pause();
             }
+            if (video != null && video.isPlaying()) {
+                video.pause();
+            }
+            startActivity(new Intent(DashboardActivity.this, VideosActivity.class));
         });
 
-        video.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer media) {
-                releaseVideo();
-                mediaPlayer = media;
-                mediaPlayer.setLooping(true);
-            }
+        video.setOnPreparedListener(media -> {
+            releaseVideo();
+            mediaPlayer = media;
+            mediaPlayer.setLooping(true);
         });
     }
 
@@ -80,7 +92,6 @@ public class DashboardActivity extends AppCompatActivity {
         englishNumbers.setText("English Numbers");
         songs.setText("Music Videos");
     }
-
 
     private void releaseVideo() {
         if (mediaPlayer != null) {
@@ -96,19 +107,32 @@ public class DashboardActivity extends AppCompatActivity {
         }
     }
 
+    private void pauseDashboardMusic() {
+        if (music != null && music.isPlaying()) {
+            music.pause();
+        }
+        if (video != null && video.isPlaying()) {
+            video.pause();
+        }
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
-        video.pause();
-        music.pause();
+        pauseDashboardMusic();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // EnglishLettersActivity.VISIBLE_BACKGROUND=false;
-        video.start();
-        music.start();
+        // Resume music and video safely
+        if (music != null) {
+            music.start();
+            music.setLooping(true);
+        }
+        if (video != null) {
+            video.start();
+        }
     }
 
     @Override
@@ -117,5 +141,4 @@ public class DashboardActivity extends AppCompatActivity {
         releaseVideo();
         releaseMusic();
     }
-
 }

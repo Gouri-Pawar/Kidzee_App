@@ -1,19 +1,14 @@
 package com.mgm.kidszee;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.media.ThumbnailUtils;
 import android.os.Bundle;
-import android.os.Environment;
+import android.os.Handler;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -21,35 +16,28 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.os.Message;
-import android.os.Handler;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 
 public class DrawingActivity extends AppCompatActivity {
 
-    private final int REQUEST_EXTERNAL_STORAGE = 10;
     private PaintView paintView;
     private ImageButton currPaint, thumbNail1, thumbNail2, thumbNail3;
     private MediaPlayer fg_voice;
-
-    // Animations
     private Animation rotate, moveRight, moveLeft, zoomIO, fadeIn, slideUD;
-
     private String saveName, savePath, prevFilePath[];
     private boolean paused = false;
     private int inActivityTime = 0;
+    private int pendingMusic = -1; // store music to play when drawing starts
 
     final Context context = this;
     final String albumName = "Kidzee";
@@ -59,6 +47,11 @@ public class DrawingActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_drawing);
+
+        // Pause Dashboard music if playing
+        if (DashboardActivity.music != null && DashboardActivity.music.isPlaying()) {
+            DashboardActivity.music.pause();
+        }
 
         paintView = findViewById(R.id.drawing);
 
@@ -74,40 +67,29 @@ public class DrawingActivity extends AppCompatActivity {
             }
         }
 
-        // Buttons with lambdas
         findViewById(R.id.erase_btn).setOnClickListener(this::eraserClicked);
         findViewById(R.id.new_btn).setOnClickListener(this::newClicked);
-
         findViewById(R.id.undo_btn).setOnClickListener(v -> {
             v.startAnimation(moveLeft);
-            if (paintView.canUndo()) {
-                startVoice(R.raw.undo);
-            } else {
-                startVoice(R.raw.noundo);
-            }
+            if (paintView.canUndo()) startVoice(R.raw.undo);
+            else startVoice(R.raw.noundo);
             paintView.onClickUndo();
         });
-
         findViewById(R.id.redo_btn).setOnClickListener(v -> {
             v.startAnimation(moveRight);
-            if (paintView.canRedo()) {
-                startVoice(R.raw.redo);
-            } else {
-                startVoice(R.raw.noredo);
-            }
+            if (paintView.canRedo()) startVoice(R.raw.redo);
+            else startVoice(R.raw.noredo);
             paintView.onClickRedo();
         });
 
         thumbNail1 = findViewById(R.id.load1);
-        thumbNail1.setOnClickListener(v -> loadClicked(v, 0));
-
         thumbNail2 = findViewById(R.id.load2);
-        thumbNail2.setOnClickListener(v -> loadClicked(v, 1));
-
         thumbNail3 = findViewById(R.id.load3);
+
+        thumbNail1.setOnClickListener(v -> loadClicked(v, 0));
+        thumbNail2.setOnClickListener(v -> loadClicked(v, 1));
         thumbNail3.setOnClickListener(v -> loadClicked(v, 2));
 
-        // Animations
         rotate = AnimationUtils.loadAnimation(this, R.anim.anim_rotate);
         moveLeft = AnimationUtils.loadAnimation(this, R.anim.move_left);
         moveRight = AnimationUtils.loadAnimation(this, R.anim.move_right);
@@ -115,275 +97,26 @@ public class DrawingActivity extends AppCompatActivity {
         zoomIO = AnimationUtils.loadAnimation(this, R.anim.zoom_in_and_out);
         slideUD = AnimationUtils.loadAnimation(this, R.anim.slide_up_and_down);
 
-        setMusic(R.raw.m1);
+        setMusic(R.raw.m1); // start DrawingActivity music
+
+        // ✅ Set app-specific storage path
+        savePath = getSavePath();
         saveName = setSaveName();
-        savePath = setSavePath();
         createThumbNail();
 
         Log.e(TAG, "onCreate: savePath - " + savePath + " saveName - " + saveName);
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        paused = true;
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        paused = false;
-        autoSave();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @SuppressLint("HandlerLeak")
-    Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            if (paintView.drawingChanged) {
-                saveDrawing();
-                paintView.drawingChanged = false;
-                autoSave();
-                inActivityTime = 0;
-            } else if (!paintView.drawingChanging) {
-                if (inActivityTime >= 30) {
-                    inActivityTime = 0;
-                    startVoice(R.raw.inactivity);
-                    final Dialog timeoutDialog = new Dialog(context);
-                    timeoutDialog.setContentView(R.layout.custom_dialog);
-                    TextView dialogText = timeoutDialog.findViewById(R.id.dialog_text);
-                    dialogText.setText(R.string.timeout_msg);
-                    ImageButton yesBtn = timeoutDialog.findViewById(R.id.btn_yes);
-                    ImageButton noBtn = timeoutDialog.findViewById(R.id.btn_no);
-                    yesBtn.setOnClickListener(v -> {
-                        startVoice(R.raw.yes);
-                        timeoutDialog.dismiss();
-                        autoSave();
-                    });
-                    noBtn.setOnClickListener(v -> {
-                        startVoice(R.raw.no);
-                        timeoutDialog.dismiss();
-                        paintView.startNew();
-                        autoSave();
-                    });
-                    timeoutDialog.getWindow().getAttributes().windowAnimations = R.style.CustomDialogAnimation;
-                    timeoutDialog.show();
-                } else {
-                    inActivityTime += 10;
-                    autoSave();
-                }
-            } else {
-                inActivityTime = 0;
-                autoSave();
+    // ------------------------ SAVE PATH ------------------------
+    private String getSavePath() {
+        File mediaStorageDir = new File(getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES), albumName);
+        if (!mediaStorageDir.exists()) {
+            if (!mediaStorageDir.mkdirs()) {
+                Toast.makeText(this, "Unable to access storage!", Toast.LENGTH_SHORT).show();
+                return null;
             }
         }
-    };
-
-    public void autoSave() {
-        if (!paused) {
-            Runnable runnable = () -> {
-                long start = System.currentTimeMillis();
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                handler.sendEmptyMessage(0);
-            };
-            new Thread(runnable).start();
-        }
-    }
-
-    public void paintClicked(View view) {
-        paintView.drawingChanging = true;
-        if (view.getId() == R.id.rc) {
-            startVoice(R.raw.red);
-            setMusic(R.raw.m1);
-            view.startAnimation(rotate);
-        } else if (view.getId() == R.id.yc) {
-            startVoice(R.raw.yellow);
-            setMusic(R.raw.m2);
-            view.startAnimation(rotate);
-        } else if (view.getId() == R.id.gc) {
-            startVoice(R.raw.green);
-            setMusic(R.raw.m3);
-            view.startAnimation(rotate);
-        } else if (view.getId() == R.id.bc) {
-            startVoice(R.raw.blue);
-            setMusic(R.raw.m4);
-            view.startAnimation(rotate);
-        } else if (view.getId() == R.id.pc) {
-            startVoice(R.raw.pink);
-            setMusic(R.raw.m5);
-            view.startAnimation(rotate);
-        }
-
-        ImageButton imgView = (ImageButton) view;
-        String color = view.getTag().toString();
-        paintView.setColor(color);
-        if (view != currPaint) {
-            imgView.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.color_selected, null));
-            currPaint.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.color_pallete, null));
-            currPaint = (ImageButton) view;
-        }
-    }
-
-    private void loadClicked(View view, final int i) {
-        paintView.drawingChanging = true;
-        view.startAnimation(zoomIO);
-        if (prevFilePath == null || prevFilePath[i] == null) {
-            startVoice(R.raw.noprev);
-            Toast.makeText(this, "No previous drawings", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        startVoice(R.raw.load);
-        final Dialog loadDialog = new Dialog(context);
-        loadDialog.setContentView(R.layout.custom_dialog);
-        TextView dialogText = loadDialog.findViewById(R.id.dialog_text);
-        dialogText.setText(R.string.load_msg);
-        ImageButton yesBtn = loadDialog.findViewById(R.id.btn_yes);
-        ImageButton noBtn = loadDialog.findViewById(R.id.btn_no);
-        yesBtn.setOnClickListener(v -> {
-            startVoice(R.raw.yes);
-            loadDialog.dismiss();
-            paintView.setBitMap(prevFilePath[i]);
-        });
-        noBtn.setOnClickListener(v -> {
-            startVoice(R.raw.no);
-            loadDialog.dismiss();
-        });
-        loadDialog.getWindow().getAttributes().windowAnimations = R.style.CustomDialogAnimation;
-        loadDialog.show();
-    }
-
-    private void newClicked(View view) {
-        startVoice(R.raw.clear);
-        view.startAnimation(slideUD);
-        paintView.drawingChanging = true;
-        final Dialog newDialog = new Dialog(context);
-        newDialog.setContentView(R.layout.custom_dialog);
-        TextView dialogText = newDialog.findViewById(R.id.dialog_text);
-        ImageButton yesBtn = newDialog.findViewById(R.id.btn_yes);
-        ImageButton noBtn = newDialog.findViewById(R.id.btn_no);
-        dialogText.setText(R.string.new_msg);
-        yesBtn.setOnClickListener(v -> {
-            startVoice(R.raw.yes);
-            newDialog.dismiss();
-            saveDrawing();
-            paintView.startNew();
-            saveName = setSaveName();
-            createThumbNail();
-        });
-        noBtn.setOnClickListener(v -> {
-            startVoice(R.raw.no);
-            newDialog.dismiss();
-        });
-        newDialog.getWindow().getAttributes().windowAnimations = R.style.CustomDialogAnimation;
-        newDialog.show();
-    }
-
-    void eraserClicked(View view) {
-        startVoice(R.raw.erase);
-        ImageButton imgView = (ImageButton) view;
-        currPaint.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.color_pallete, null));
-        imgView.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.color_selected, null));
-        currPaint = imgView;
-        paintView.drawingChanging = true;
-        view.startAnimation(fadeIn);
-        setMusic(R.raw.erasor);
-        paintView.setErase(true);
-    }
-
-    private void saveDrawing() {
-
-        if (savePath == null) {
-            Toast.makeText(this, "Storage not available", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        try {
-
-            Bitmap bitmap = Bitmap.createBitmap(
-                    paintView.getWidth(),
-                    paintView.getHeight(),
-                    Bitmap.Config.ARGB_8888
-            );
-
-            android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
-            paintView.draw(canvas);
-
-            File pictureFile = new File(savePath + File.separator + saveName);
-
-            FileOutputStream fos = new FileOutputStream(pictureFile);
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
-            fos.flush();
-            fos.close();
-            saveName = setSaveName();
-            createThumbNail();
-
-            Toast.makeText(getApplicationContext(),
-                    "Drawing Saved!", Toast.LENGTH_SHORT).show();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(getApplicationContext(),
-                    "Error saving image!", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    public void createThumbNail() {
-        if (savePath != null) {
-            File files[] = new File(savePath).listFiles();
-            prevFilePath = new String[3];
-            if (files != null && files.length > 0) {
-                File file1 = files[0];
-                File file2 = null;
-                File file3 = null;
-
-                for (int i = 1; i < files.length; i++) {
-                    if (file1.lastModified() < files[i].lastModified()) {
-                        file3 = file2;
-                        file2 = file1;
-                        file1 = files[i];
-                    } else if ((file2 == null) || (file2.lastModified() < files[i].lastModified())) {
-                        file3 = file2;
-                        file2 = files[i];
-                    } else if ((file3 == null) || (file3.lastModified() < files[i].lastModified())) {
-                        file3 = files[i];
-                    }
-                }
-
-                if (file1 != null) {
-                    prevFilePath[0] = file1.getAbsolutePath();
-                    Bitmap ThumbImage = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(prevFilePath[0]), 64, 64);
-                    thumbNail1.setImageBitmap(ThumbImage);
-                }
-                if (file2 != null) {
-                    prevFilePath[1] = file2.getAbsolutePath();
-                    Bitmap ThumbImage2 = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(prevFilePath[1]), 64, 64);
-                    thumbNail2.setImageBitmap(ThumbImage2);
-                }
-                if (file3 != null) {
-                    prevFilePath[2] = file3.getAbsolutePath();
-                    Bitmap ThumbImage3 = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(prevFilePath[2]), 64, 64);
-                    thumbNail3.setImageBitmap(ThumbImage3);
-                }
-            }
-        }
+        return mediaStorageDir.getAbsolutePath();
     }
 
     private String setSaveName() {
@@ -391,68 +124,224 @@ public class DrawingActivity extends AppCompatActivity {
         return "BD_" + timeStamp + ".png";
     }
 
-    @Nullable
-    private String setSavePath() {
-        int permissionCheck = ContextCompat.checkSelfPermission(this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    REQUEST_EXTERNAL_STORAGE);
-        } else {
-            if (!isExternalStorageWritable()) {
-                return null;
-            }
-            File mediaStorageDir = new File(
-                    getExternalFilesDir(Environment.DIRECTORY_PICTURES),
-                    albumName
+    // ------------------------ SAVE DRAWING ------------------------
+    private void saveDrawing() {
+        if (savePath == null) return; // storage unavailable
+
+        try {
+            Bitmap bitmap = Bitmap.createBitmap(paintView.getWidth(), paintView.getHeight(), Bitmap.Config.ARGB_8888);
+            android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
+            paintView.draw(canvas);
+
+            File pictureFile = new File(savePath + File.separator + saveName);
+            FileOutputStream fos = new FileOutputStream(pictureFile);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            fos.flush();
+            fos.close();
+
+            saveName = setSaveName();
+            createThumbNail();
+            Log.e(TAG, "Drawing saved: " + pictureFile.getAbsolutePath());
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Error saving drawing!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // ------------------------ THUMBNAILS ------------------------
+    private void createThumbNail() {
+        if (savePath == null) return;
+
+        File files[] = new File(savePath).listFiles();
+        prevFilePath = new String[3]; // store latest 3 drawings
+
+        if (files == null || files.length == 0) {
+            thumbNail1.setImageResource(R.drawable.ic_placeholder);
+            thumbNail2.setImageResource(R.drawable.ic_placeholder);
+            thumbNail3.setImageResource(R.drawable.ic_placeholder);
+            return;
+        }
+
+        // Sort files by lastModified descending (newest first)
+        Arrays.sort(files, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
+
+        for (int i = 0; i < Math.min(3, files.length); i++) {
+            prevFilePath[i] = files[i].getAbsolutePath();
+            Bitmap thumbImage = ThumbnailUtils.extractThumbnail(
+                    BitmapFactory.decodeFile(prevFilePath[i]), 64, 64
             );
-            if (!mediaStorageDir.exists()) {
-                if (!mediaStorageDir.mkdirs()) {
-                    return null;
-                }
-            }
-            return mediaStorageDir.getAbsolutePath();
-        }
-        return null;
-    }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_EXTERNAL_STORAGE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                saveDrawing();
-            } else {
-                Toast.makeText(getApplicationContext(),
-                        "Permission Denied! Image could not be saved.", Toast.LENGTH_SHORT).show();
+            switch (i) {
+                case 0: thumbNail1.setImageBitmap(thumbImage); break;
+                case 1: thumbNail2.setImageBitmap(thumbImage); break;
+                case 2: thumbNail3.setImageBitmap(thumbImage); break;
             }
+        }
+
+        if (files.length < 3) {
+            if (files.length < 2) thumbNail2.setImageResource(R.drawable.ic_placeholder);
+            if (files.length < 3) thumbNail3.setImageResource(R.drawable.ic_placeholder);
         }
     }
 
-    public boolean isExternalStorageWritable() {
-        String state = Environment.getExternalStorageState();
-        return Environment.MEDIA_MOUNTED.equals(state);
+    // ------------------------ COLOR CLICK ------------------------
+    public void paintClicked(View view) {
+        paintView.drawingChanging = true;
+
+        // Assign music ID instead of playing immediately
+        if (view.getId() == R.id.rc) pendingMusic = R.raw.m1;
+        else if (view.getId() == R.id.yc) pendingMusic = R.raw.m2;
+        else if (view.getId() == R.id.gc) pendingMusic = R.raw.m3;
+        else if (view.getId() == R.id.bc) pendingMusic = R.raw.m4;
+        else if (view.getId() == R.id.pc) pendingMusic = R.raw.m5;
+
+        startVoiceForColor(view.getId()); // play voice immediately
+
+        // Set paint color
+        String color = view.getTag().toString();
+        paintView.setColor(color);
+
+        if (view != currPaint) {
+            ((ImageButton) view).setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.color_selected, null));
+            currPaint.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.color_pallete, null));
+            currPaint = (ImageButton) view;
+        }
     }
 
+    private void startVoiceForColor(int viewId) {
+        if (fg_voice != null) fg_voice.release();
+
+        if (viewId == R.id.rc) fg_voice = MediaPlayer.create(context, R.raw.red);
+        else if (viewId == R.id.yc) fg_voice = MediaPlayer.create(context, R.raw.yellow);
+        else if (viewId == R.id.gc) fg_voice = MediaPlayer.create(context, R.raw.green);
+        else if (viewId == R.id.bc) fg_voice = MediaPlayer.create(context, R.raw.blue);
+        else if (viewId == R.id.pc) fg_voice = MediaPlayer.create(context, R.raw.pink);
+
+        if (fg_voice != null) fg_voice.start();
+    }
+
+    // ------------------------ NEW / LOAD / ERASER ------------------------
+    private void newClicked(View view) {
+        startVoice(R.raw.clear);
+        view.startAnimation(slideUD);
+        paintView.drawingChanging = true;
+
+        final Dialog newDialog = new Dialog(context);
+        newDialog.setContentView(R.layout.custom_dialog);
+        TextView dialogText = newDialog.findViewById(R.id.dialog_text);
+        dialogText.setText(R.string.new_msg);
+
+        ImageButton yesBtn = newDialog.findViewById(R.id.btn_yes);
+        ImageButton noBtn = newDialog.findViewById(R.id.btn_no);
+
+        yesBtn.setOnClickListener(v -> {
+            startVoice(R.raw.yes);
+            newDialog.dismiss();
+            saveDrawing();      // save current before clearing
+            paintView.startNew();
+            saveName = setSaveName();
+            createThumbNail();
+        });
+
+        noBtn.setOnClickListener(v -> {
+            startVoice(R.raw.no);
+            newDialog.dismiss();
+        });
+
+        newDialog.getWindow().getAttributes().windowAnimations = R.style.CustomDialogAnimation;
+        newDialog.show();
+    }
+
+    private void loadClicked(View view, final int i) {
+        paintView.drawingChanging = true;
+        view.startAnimation(zoomIO);
+
+        if (prevFilePath == null || prevFilePath[i] == null) {
+            startVoice(R.raw.noprev);
+            Toast.makeText(this, "No previous drawings", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        startVoice(R.raw.load);
+        final Dialog loadDialog = new Dialog(context);
+        loadDialog.setContentView(R.layout.custom_dialog);
+        TextView dialogText = loadDialog.findViewById(R.id.dialog_text);
+        dialogText.setText(R.string.load_msg);
+
+        ImageButton yesBtn = loadDialog.findViewById(R.id.btn_yes);
+        ImageButton noBtn = loadDialog.findViewById(R.id.btn_no);
+
+        yesBtn.setOnClickListener(v -> {
+            startVoice(R.raw.yes);
+            loadDialog.dismiss();
+            paintView.setBitMap(prevFilePath[i]);
+        });
+
+        noBtn.setOnClickListener(v -> {
+            startVoice(R.raw.no);
+            loadDialog.dismiss();
+        });
+
+        loadDialog.getWindow().getAttributes().windowAnimations = R.style.CustomDialogAnimation;
+        loadDialog.show();
+    }
+
+    void eraserClicked(View view) {
+        startVoice(R.raw.erase);
+        ((ImageButton) currPaint).setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.color_pallete, null));
+        ((ImageButton) view).setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.color_selected, null));
+        currPaint = (ImageButton) view;
+        paintView.drawingChanging = true;
+        view.startAnimation(fadeIn);
+        setMusic(R.raw.erasor);
+        paintView.setErase(true);
+    }
+
+    // ------------------------ VOICE & MUSIC ------------------------
     void startVoice(int voiceId) {
-        if (fg_voice != null) {
-            fg_voice.release();
-        }
+        if (fg_voice != null) fg_voice.release();
         fg_voice = MediaPlayer.create(context, voiceId);
         fg_voice.start();
     }
 
     void setMusic(int musicId) {
-        if (paintView != null && paintView.bg_music != null) {
-            paintView.bg_music.release();
-        }
-
+        if (paintView.bg_music != null) paintView.bg_music.release();
         paintView.bg_music = MediaPlayer.create(context, musicId);
-
         if (paintView.bg_music != null) {
             paintView.bg_music.setLooping(true);
             paintView.bg_music.start();
         }
+    }
+
+    // ------------------------ LIFECYCLE ------------------------
+    @Override
+    protected void onPause() {
+        super.onPause();
+        paused = true;
+        if (paintView.bg_music != null && paintView.bg_music.isPlaying()) paintView.bg_music.pause();
+        if (fg_voice != null && fg_voice.isPlaying()) fg_voice.pause();
+        saveDrawing(); // auto save on pause
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        paused = false;
+        if (paintView.bg_music != null) paintView.bg_music.start();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (paintView.bg_music != null) {
+            paintView.bg_music.release();
+            paintView.bg_music = null;
+        }
+        if (fg_voice != null) {
+            fg_voice.release();
+            fg_voice = null;
+        }
+        // Resume Dashboard music
+        if (DashboardActivity.music != null) DashboardActivity.music.start();
     }
 }

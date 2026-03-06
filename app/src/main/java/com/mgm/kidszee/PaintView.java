@@ -16,79 +16,46 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
-/**
- * The type Paint view.
- */
 public class PaintView extends View {
-    //drawing path
     private Path drawPath;
-    //drawing and canvas paint
     private Paint drawPaint, canvasPaint;
-    //initial color
     private int paintColor = Color.RED;
-    //canvas
     private Canvas drawCanvas;
-    //canvas bitmap
     private Bitmap canvasBitmap;
     private boolean bitmapSet = false;
-    /**
-     * The Drawing changed.
-     */
-    public boolean drawingChanged = false, /**
-     * The Drawing changing.
-     */
-    drawingChanging = false;
+
+    public boolean drawingChanged = false, drawingChanging = false;
+
     private ArrayList<PathColorPair> paths = new ArrayList<>();
     private ArrayList<PathColorPair> undonePaths = new ArrayList<>();
-    /**
-     * The Bg music.
-     */
+
     public MediaPlayer bg_music;
 
+    // NEW: pending music ID (set by DrawingActivity)
+    public int pendingMusic = -1;
+
     private class PathColorPair {
-        /**
-         * The Path.
-         */
         Path path;
-        /**
-         * The Color.
-         */
         int color;
 
-        /**
-         * Instantiates a new Path color pair.
-         *
-         * @param path  the path
-         * @param color the color
-         */
         PathColorPair(Path path, int color) {
             this.path = path;
             this.color = color;
         }
 
-        /**
-         * Instantiates a new Path color pair.
-         *
-         * @param other the other
-         */
         PathColorPair(PathColorPair other) {
             this.path = other.path;
             this.color = other.color;
         }
     }
 
-    /**
-     * Instantiates a new Paint view.
-     *
-     * @param context the context
-     * @param attrs   the attrs
-     */
     public PaintView(Context context, AttributeSet attrs) {
         super(context, attrs);
         drawPath = new Path();
         drawPaint = new Paint();
         drawCanvas = new Canvas();
         canvasPaint = new Paint(Paint.DITHER_FLAG);
+
         int brushSize = getResources().getInteger(R.integer.brush_size);
         drawPaint.setAntiAlias(true);
         drawPaint.setDither(true);
@@ -101,29 +68,17 @@ public class PaintView extends View {
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        //view given size
         super.onSizeChanged(w, h, oldw, oldh);
         canvasBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         drawCanvas = new Canvas(canvasBitmap);
     }
 
-    /**
-     * Sets color.
-     *
-     * @param newColor the new color
-     */
     public void setColor(String newColor) {
-        //set color
         invalidate();
         paintColor = Color.parseColor(newColor);
         drawPaint.setColor(paintColor);
     }
 
-    /**
-     * Sets erase.
-     *
-     * @param isErase the is erase
-     */
     public void setErase(boolean isErase) {
         if (isErase) {
             paintColor = Color.WHITE;
@@ -131,9 +86,6 @@ public class PaintView extends View {
         }
     }
 
-    /**
-     * Start new.
-     */
     public void startNew() {
         bitmapSet = false;
         paths.clear();
@@ -141,17 +93,10 @@ public class PaintView extends View {
         invalidate();
     }
 
-    /**
-     * Sets bit map.
-     *
-     * @param fileName the file name
-     */
     public void setBitMap(String fileName) {
-//        startNew();
         paths.clear();
         drawCanvas.drawColor(0, PorterDuff.Mode.CLEAR);
         canvasBitmap = BitmapFactory.decodeFile(fileName).copy(Bitmap.Config.ARGB_8888, true);
-//    drawCanvas = new_icon Canvas(bmp);
         bitmapSet = true;
         drawCanvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
         invalidate();
@@ -188,62 +133,38 @@ public class PaintView extends View {
         drawingChanged = true;
     }
 
-    /**
-     * Can undo boolean.
-     *
-     * @return the boolean
-     */
-    boolean canUndo() {
-        return paths.size() > 0;
-    }
+    boolean canUndo() { return paths.size() > 0; }
+    boolean canRedo() { return undonePaths.size() > 0; }
 
-    /**
-     * Can redo boolean.
-     *
-     * @return the boolean
-     */
-    boolean canRedo() {
-        return undonePaths.size() > 0;
-    }
-
-    /**
-     * On click undo.
-     */
     public void onClickUndo() {
         if (canUndo()) {
             undonePaths.add(new PathColorPair(paths.remove(paths.size() - 1)));
             drawingChanged = true;
             invalidate();
         } else {
-            Toast.makeText(getContext(), "Nothing to undo", Toast.LENGTH_SHORT)
-                    .show();
+            Toast.makeText(getContext(), "Nothing to undo", Toast.LENGTH_SHORT).show();
         }
     }
 
-    /**
-     * On click redo.
-     */
     public void onClickRedo() {
         if (canRedo()) {
             paths.add(new PathColorPair(undonePaths.remove(undonePaths.size() - 1)));
             drawingChanged = true;
             invalidate();
         } else {
-            Toast.makeText(getContext(), "Nothing to redo", Toast.LENGTH_SHORT)
-                    .show();
+            Toast.makeText(getContext(), "Nothing to redo", Toast.LENGTH_SHORT).show();
         }
     }
 
-
     @Override
     protected void onDraw(Canvas canvas) {
-        if (bitmapSet) {
-            canvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
-        }
+        if (bitmapSet) canvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
+
         for (PathColorPair pc : paths) {
             drawPaint.setColor(pc.color);
             canvas.drawPath(pc.path, drawPaint);
         }
+
         drawPaint.setColor(paintColor);
         canvas.drawPath(drawPath, drawPaint);
     }
@@ -255,21 +176,27 @@ public class PaintView extends View {
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                if (bg_music != null) {
-                    bg_music.start();
-                    bg_music.setLooping(true);
+                // NEW: start pending music only on first touch
+                if (pendingMusic != -1) {
+                    if (bg_music != null) bg_music.release();
+                    bg_music = MediaPlayer.create(getContext(), pendingMusic);
+                    if (bg_music != null) {
+                        bg_music.setLooping(true);
+                        bg_music.start();
+                    }
+                    pendingMusic = -1; // reset
                 }
                 touch_start(x, y);
                 break;
+
             case MotionEvent.ACTION_MOVE:
                 touch_move(x, y);
                 break;
+
             case MotionEvent.ACTION_UP:
-                if (bg_music != null && bg_music.isPlaying()) {
-                    bg_music.pause();
-                }
                 touch_up();
                 break;
+
             default:
                 return false;
         }
